@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AGI+ Meios de Pagamentos</title>
+<style>
+:root{
+  --bg:#070707;--panel:#111;--panel2:#171717;--gold:#d4af37;--gold2:#f2d675;
+  --text:#f5f5f5;--muted:#aaa;--green:#70d66b;--red:#ff6b6b;--line:#303030;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+.app{display:grid;grid-template-columns:245px 1fr;min-height:100vh}
+aside{background:#030303;border-right:1px solid #2b240c;padding:22px 14px;position:sticky;top:0;height:100vh}
+.logo{font-size:39px;font-weight:900;color:var(--gold);letter-spacing:-2px}.logo small{display:block;font-size:10px;letter-spacing:2px;color:white;margin-top:-4px}
+nav{margin-top:28px;display:grid;gap:7px}.navbtn{border:0;background:transparent;color:#ddd;text-align:left;padding:13px 14px;border-radius:8px;cursor:pointer}.navbtn:hover,.navbtn.active{background:linear-gradient(90deg,#b58a16,#e1bd4a);color:#000;font-weight:700}
+main{padding:22px;min-width:0}.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.title{font-size:22px;font-weight:800}.badge{padding:8px 12px;border:1px solid #4d3d0c;border-radius:999px;color:var(--gold)}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:15px}.card,.panel{background:linear-gradient(145deg,#171717,#0e0e0e);border:1px solid var(--line);border-radius:12px;padding:16px}.metric b{font-size:23px;display:block;margin-top:7px}.metric span{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1.25fr .75fr;gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.panel h3{margin:0 0 14px;font-size:15px}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+label{display:block;font-size:11px;color:#c8c8c8;margin-bottom:5px;text-transform:uppercase}input,select,textarea{width:100%;background:#090909;color:white;border:1px solid #383838;border-radius:8px;padding:11px}textarea{min-height:90px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}.tab{padding:10px 13px;border:1px solid #4b3c0f;background:#0b0b0b;color:#ddd;border-radius:8px;cursor:pointer}.tab.active{background:var(--gold);color:#000;font-weight:700}
+.btn{border:0;border-radius:8px;padding:11px 14px;cursor:pointer;font-weight:700}.btn.gold{background:linear-gradient(90deg,#b78918,#e7c653);color:#000}.btn.dark{background:#232323;color:white;border:1px solid #444}.btn.red{background:#601f1f;color:white}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.summary{display:grid;gap:9px}.row{display:flex;justify-content:space-between;gap:15px;border-bottom:1px solid #292929;padding:9px 0}.row strong.gold{color:var(--gold2)}.row strong.green{color:var(--green)}.row strong.red{color:var(--red)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #2c2c2c;padding:9px;text-align:left}th{color:var(--gold);font-size:11px;text-transform:uppercase}.tablewrap{overflow:auto}
+.page{display:none}.page.active{display:block}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.notice{background:#241d08;border:1px solid #6c5716;padding:10px;border-radius:8px;color:#f3da8a;font-size:13px}
+.status{font-size:11px;padding:5px 8px;border-radius:999px;background:#252525}.status.pago{background:#164d21;color:#aef0b8}.status.aguardando{background:#5a4514;color:#ffe39a}
+.modal{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modal.open{display:flex}.modalbox{width:min(760px,100%);max-height:90vh;overflow:auto;background:#111;border:1px solid #544416;border-radius:14px;padding:20px}
+.close{float:right;background:none;border:0;color:white;font-size:22px;cursor:pointer}
+.small{font-size:12px;color:var(--muted)}
+.promo-grid{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:14px;margin-top:15px}
+.promo-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#201806,#0d0d0d 62%);border:1px solid #8c6b17;border-radius:16px;padding:18px;min-height:225px;box-shadow:0 10px 28px #0008;transition:.2s transform,.2s border-color}
+.promo-card:hover{transform:translateY(-3px);border-color:var(--gold2)}
+.promo-ribbon{position:absolute;right:-40px;top:20px;transform:rotate(36deg);background:var(--gold);color:#000;font-size:10px;font-weight:900;padding:6px 45px;letter-spacing:1px}
+.promo-plan{font-size:30px;font-weight:900;color:var(--gold2);margin-bottom:2px}
+.promo-sub{font-size:11px;color:#bdbdbd;text-transform:uppercase;letter-spacing:1px}
+.promo-installment{font-size:25px;font-weight:900;margin:17px 0 3px}
+.promo-label{font-size:11px;color:var(--muted);text-transform:uppercase}
+.promo-commission{margin-top:14px;padding:11px;border-radius:10px;background:#102812;border:1px solid #285d2d}
+.promo-commission strong{display:block;color:var(--green);font-size:20px;margin-top:3px}
+.promo-total{margin-top:12px;font-size:12px;color:#ddd}
+.promo-rate{display:inline-block;margin-top:10px;padding:5px 8px;border-radius:999px;background:#2b2208;color:#f5d97a;font-size:11px}
+@media(max-width:1250px){.promo-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:800px){.promo-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.promo-grid{grid-template-columns:1fr}}
+.mono{font-family:Consolas,monospace;white-space:pre-wrap;background:#050505;padding:12px;border-radius:8px;border:1px solid #333}
+@media(max-width:1000px){.app{grid-template-columns:1fr}aside{position:static;height:auto}.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}nav{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){main{padding:12px}.cards,.grid3,.formgrid{grid-template-columns:1fr}.topbar{align-items:flex-start;gap:8px}.badge{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="logo">AGI+<small>MEIOS DE PAGAMENTOS</small></div>
+  <nav>
+    <button class="navbtn active" data-page="dashboard">Dashboard</button>
+    <button class="navbtn" data-page="calculadora">Calculadora</button>
+    <button class="navbtn" data-page="clientes">Clientes</button>
+    <button class="navbtn" data-page="operacoes">Operações</button>
+    <button class="navbtn" data-page="filiais">Filiais e tabelas</button>
+    <button class="navbtn" data-page="usuarios">Usuários</button>
+    <button class="navbtn" data-page="contratos">Contratos</button>
+  </nav>
+</aside>
+<main>
+  <div class="topbar">
+  <div class="title" id="pageTitle">Dashboard</div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <select id="perfilAtual" style="width:auto;min-width:210px">
+      <option>Parceiro Comercial</option>
+      <option>Administrador</option>
+      <option>Financeiro</option>
+      <option>Comercial de Expansão</option>
+    </select>
+    <div class="badge">Protótipo local • AGI+</div>
+  </div>
+</div>
+
+  <section id="dashboard" class="page active">
+    <div class="cards">
+      <div class="card metric"><span>CLIENTES</span><b id="mClientes">0</b></div>
+      <div class="card metric"><span>OPERAÇÕES</span><b id="mOperacoes">0</b></div>
+      <div class="card metric"><span>VOLUME REGISTRADO</span><b id="mVolume">R$ 0,00</b></div>
+      <div class="card metric"><span>AGUARDANDO PAGAMENTO</span><b id="mPendentes">0</b></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h3>Últimas operações</h3><div class="tablewrap"><table><thead><tr><th>ID</th><th>Cliente</th><th>Parceiro</th><th>Valor</th><th>Status</th></tr></thead><tbody id="dashOps"></tbody></table></div></div>
+      <div class="panel"><h3>Acessos rápidos</h3><div class="actions">
+        <button class="btn gold" onclick="go('calculadora')">Nova simulação</button>
+        <button class="btn dark" onclick="openClient()">Novo cliente</button>
+        <button class="btn dark" onclick="go('operacoes')">Ver operações</button>
+      </div><p class="small">Os dados deste protótipo ficam salvos apenas neste navegador, usando armazenamento local.</p></div>
+    </div>
+    <div class="panel" style="margin-top:15px;border-color:#6c5415">
+      <div class="toolbar">
+        <div>
+          <div class="promo-rate">OPORTUNIDADES EM DESTAQUE</div>
+          <h2 style="margin:8px 0 4px;color:var(--gold2)">Sugestões de venda — R5</h2>
+          <div class="small">Ofertas em destaque para ajudar o parceiro a visualizar rapidamente a parcela e quanto ganhará em cada venda.</div>
+        </div>
+        <div style="display:flex;gap:8px;min-width:390px">
+          <input id="sugValor" type="number" min="0" step="0.01" value="1000" placeholder="Valor desejado">
+          <select id="sugBandeira"><option>MASTER E VISA</option><option>HIPER E ELO</option></select>
+        </div>
+      </div>
+      <div id="sugestoesBody" class="promo-grid"></div>
+    </div>
+  </section>
+
+  <section id="calculadora" class="page">
+    <div class="grid2">
+      <div class="panel">
+        <h3>Simulação da operação</h3>
+        <div class="tabs"><button class="tab active" id="tabDesejado">Valor desejado</button><button class="tab" id="tabLimite">Limite disponível (cálculo reverso)</button></div>
+<div class="small" id="modoAjuda" style="margin:-4px 0 12px">Informe quanto o cliente deseja receber; o sistema calculará o limite necessário.</div>
+        <div class="formgrid">
+          <div><label>Filial / tabela</label><select id="calcFilial"></select></div>
+          <div><label>Bandeira</label><select id="calcBandeira"><option>MASTER E VISA</option><option>HIPER E ELO</option></select></div>
+          <div><label>Forma de pagamento</label><select id="calcForma"></select></div>
+          <div><label>Nível de repasse</label><select id="calcR"></select></div>
+          <div><label id="valorLabel">Valor desejado pelo cliente</label><input id="calcValor" type="number" min="0" step="0.01" value="1000"></div>
+          <div class="interno"><label>Parâmetro interno de expansão</label><input id="calcExp" type="number" min="0" step="0.01" value="0.50"></div>
+        </div>
+        <div class="actions"><button class="btn gold" onclick="calcular()">Calcular</button><button class="btn dark" onclick="registrarOperacao()">Registrar venda</button></div>
+      </div>
+      <div class="panel"><h3>Resumo</h3><div class="summary" id="resumo"></div></div>
+    </div>
+    <div class="panel" style="margin-top:15px">
+      <h3>Simulação de repasses R1 a R20</h3>
+      <p class="small" id="comparativoAjuda">Comparação automática das taxas, comissões e resultado interno.</p>
+      <div class="tablewrap"><table><thead><tr>
+        <th>Nível</th><th>Taxa aplicada</th><th>Valor da operação</th><th>Valor líquido ao cliente</th>
+        <th>Comissão do parceiro</th><th class="interno">Resultado da empresa</th>
+      </tr></thead><tbody id="comparativo"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="clientes" class="page">
+    <div class="toolbar"><div class="notice">Cadastro demonstrativo. Evite usar dados reais neste protótipo local.</div><button class="btn gold" onclick="openClient()">Cadastrar cliente</button></div>
+    <div class="panel tablewrap"><table><thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Pagamento</th><th>Banco</th><th>Parceiro</th><th>Ações</th></tr></thead><tbody id="clientesBody"></tbody></table></div>
+  </section>
+
+  <section id="operacoes" class="page">
+    <div class="panel tablewrap"><table><thead><tr><th>ID</th><th>Cliente</th><th>Filial</th><th>Forma</th><th>R</th><th>Valor líquido</th><th>Status</th><th>Ações</th></tr></thead><tbody id="opsBody"></tbody></table></div>
+  </section>
+
+  <section id="filiais" class="page">
+    <div class="toolbar"><div class="small">Cada filial possui nome e tabela operacional editáveis.</div><button class="btn gold" onclick="openFilial()">Nova filial</button></div>
+    <div class="panel tablewrap"><table><thead><tr><th>Filial</th><th>Código</th><th>Parceiros vinculados</th><th>Ações</th></tr></thead><tbody id="filiaisBody"></tbody></table></div>
+  </section>
+
+  <section id="usuarios" class="page">
+    <div class="toolbar"><div class="small">Perfis: administrador, financeiro, parceiro e comercial de expansão.</div><button class="btn gold" onclick="openUser()">Novo usuário</button></div>
+    <div class="panel tablewrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Filial</th><th>Status</th></tr></thead><tbody id="usersBody"></tbody></table></div>
+  </section>
+
+  <section id="contratos" class="page">
+    <div class="panel"><h3>Instrumento Particular de Operação</h3><p class="small">Selecione uma operação registrada para gerar um modelo interno semelhante a um contrato comercial.</p>
+      <select id="contratoOp"></select>
+      <div class="actions"><button class="btn gold" onclick="gerarContrato()">Gerar modelo</button></div>
+      <div id="contratoPreview" class="mono" style="margin-top:12px"></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<div class="modal" id="modal"><div class="modalbox"><button class="close" onclick="closeModal()">×</button><div id="modalContent"></div></div></div>
+
+<script>
+const FORMAS=["PIX","DEB",...Array.from({length:18},(_,i)=>`${i+1}X`)];
+const BASE={
+ "MASTER E VISA":[0.005,0.0099,0.0899,0.0983,0.1048,0.1112,0.1176,0.1239,0.1271,0.1283,0.1344,0.1355,0.1365,0.1398,0.1764,0.1823,0.1881,0.1839,0.1996,0.2053],
+ "HIPER E ELO":[0.005,0.016,0.1062,0.1146,0.1211,0.1275,0.1339,0.1402,0.1434,0.1446,0.1507,0.1518,0.1528,0.1561,0.1927,0.1986,0.2044,0.2002,0.2159,0.2216]
+};
+const COST={
+ "MASTER E VISA":[0.005,0.0099,0.0299,0.0383,0.0448,0.0512,0.0576,0.0639,0.0721,0.0783,0.0844,0.0905,0.0965,0.1025,0.1164,0.1223,0.1281,0.1339,0.1396,0.1453],
+ "HIPER E ELO":[0.005,0.016,0.0369,0.0487,0.0552,0.0616,0.068,0.0743,0.0884,0.0946,0.1007,0.1068,0.1128,0.1188,0.1247,0.1306,0.1364,0.1422,0.1479,0.1536]
+};
+let mode="desejado";
+let perfil="Parceiro Comercial";
+const db=JSON.parse(localStorage.getItem("agi_db")||"null")||{
+ filiais:[{id:"FIL-001",nome:"AGI+ Principal",codigo:"FIL-001"}],
+ clientes:[],
+ usuarios:[{nome:"Administrador AGI+",email:"admin@agimais.site",perfil:"Administrador",filial:"Todas",status:"Ativo"}],
+ operacoes:[]
+};
+function save(){localStorage.setItem("agi_db",JSON.stringify(db));renderAll()}
+const brl=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const pct=v=>(v*100).toFixed(2).replace(".",",")+"%";
+function go(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".navbtn").forEach(x=>x.classList.toggle("active",x.dataset.page===id));pageTitle.textContent=document.querySelector(`[data-page="${id}"]`)?.textContent||"AGI+"}
+document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>go(b.dataset.page));
+FORMAS.forEach(x=>calcForma.add(new Option(x,x)));
+for(let i=1;i<=20;i++)calcR.add(new Option(`R${i} (${i},00%)`,`R${i}`));
+tabDesejado.onclick=()=>{mode="desejado";tabDesejado.classList.add("active");tabLimite.classList.remove("active");valorLabel.textContent="Valor desejado pelo cliente";modoAjuda.textContent="Informe quanto o cliente deseja receber; o sistema calculará o limite necessário.";calcular()};
+tabLimite.onclick=()=>{mode="limite";tabLimite.classList.add("active");tabDesejado.classList.remove("active");valorLabel.textContent="Limite disponível";modoAjuda.textContent="Informe o limite disponível; o sistema fará o cálculo reverso e mostrará o valor líquido máximo.";calcular()};
+["calcFilial","calcBandeira","calcForma","calcR","calcValor","calcExp"].forEach(id=>document.getElementById(id).addEventListener("input",calcular));
+perfilAtual.addEventListener("change",()=>{perfil=perfilAtual.value;aplicarPermissoes();renderAll()});
+sugValor.addEventListener("input",renderSugestoes);
+sugBandeira.addEventListener("change",renderSugestoes);
+function taxaFor(b,f,r){return BASE[b][FORMAS.indexOf(f)]+(r-1)*0.012}
+function calcData(rOverride){
+ const b=calcBandeira.value;
+ const f=calcForma.value;
+ const r=rOverride||Number(calcR.value.slice(1));
+ const entrada=Number(calcValor.value||0);
+ const exp=Number(calcExp.value||0)/100;
+ const taxa=taxaFor(b,f,r);
+ const custo=COST[b][FORMAS.indexOf(f)];
+
+ // Cálculo direto:
+ // valor total = valor líquido desejado × (1 + taxa)
+ // Cálculo reverso:
+ // valor líquido máximo = limite disponível ÷ (1 + taxa)
+ let liquido,total;
+ if(mode==="desejado"){
+   liquido=entrada;
+   total=liquido*(1+taxa);
+ }else{
+   total=entrada;
+   liquido=total/(1+taxa);
+ }
+
+ const custoR=total*custo;
+ const parceiro=liquido*(r/100);
+ const expansao=total*exp;
+ const resultado=total-custoR-liquido-parceiro-expansao;
+ const parcelas=/X$/.test(f)?Number(f.replace("X","")):1;
+ return {
+   b,f,r,taxa,custo,liquido,total,custoR,parceiro,expansao,resultado,
+   parcela:total/parcelas,filial:calcFilial.value
+ };
+}
+function calcular(){
+ const d=calcData();
+ const parceiro = perfil==="Parceiro Comercial";
+
+ if(parceiro){
+   resumo.innerHTML = mode==="desejado" ? `
+     <div class="row"><span>Taxa da operação</span><strong class="gold">${pct(d.taxa)}</strong></div>
+     <div class="row"><span>Valor desejado pelo cliente</span><strong>${brl(d.liquido)}</strong></div>
+     <div class="row"><span>Limite necessário</span><strong>${brl(d.total)}</strong></div>
+     <div class="row"><span>Minha comissão nesta operação</span><strong class="green">${pct(d.r/100)} • ${brl(d.parceiro)}</strong></div>
+     <div class="row"><span>Valor aproximado por parcela</span><strong>${brl(d.parcela)}</strong></div>` : `
+     <div class="row"><span>Taxa da operação</span><strong class="gold">${pct(d.taxa)}</strong></div>
+     <div class="row"><span>Limite disponível</span><strong>${brl(d.total)}</strong></div>
+     <div class="row"><span>Valor líquido máximo ao cliente</span><strong>${brl(d.liquido)}</strong></div>
+     <div class="row"><span>Minha comissão nesta operação</span><strong class="green">${pct(d.r/100)} • ${brl(d.parceiro)}</strong></div>
+     <div class="row"><span>Valor aproximado por parcela</span><strong>${brl(d.parcela)}</strong></div>`;
+ }else{
+   resumo.innerHTML = mode==="desejado" ? `
+     <div class="row"><span>Taxa da operação selecionada</span><strong class="gold">${pct(d.taxa)}</strong></div>
+     <div class="row"><span>Valor desejado pelo cliente</span><strong>${brl(d.liquido)}</strong></div>
+     <div class="row"><span>Valor total da operação</span><strong>${brl(d.total)}</strong></div>
+     <div class="row"><span>Custo operacional</span><strong>${pct(d.custo)} • ${brl(d.custoR)}</strong></div>
+     <div class="row"><span>Valor após custo operacional</span><strong>${brl(d.total-d.custoR)}</strong></div>
+     <div class="row"><span>Comissão do parceiro</span><strong>${pct(d.r/100)} • ${brl(d.parceiro)}</strong></div>
+     <div class="row"><span>Valor aproximado por parcela</span><strong>${brl(d.parcela)}</strong></div>` : `
+     <div class="row"><span>Taxa da operação selecionada</span><strong class="gold">${pct(d.taxa)}</strong></div>
+     <div class="row"><span>Limite disponível</span><strong>${brl(d.total)}</strong></div>
+     <div class="row"><span>Valor líquido máximo ao cliente</span><strong>${brl(d.liquido)}</strong></div>
+     <div class="row"><span>Custo operacional</span><strong>${pct(d.custo)} • ${brl(d.custoR)}</strong></div>
+     <div class="row"><span>Valor após custo operacional</span><strong>${brl(d.total-d.custoR)}</strong></div>
+     <div class="row"><span>Comissão do parceiro</span><strong>${pct(d.r/100)} • ${brl(d.parceiro)}</strong></div>
+     <div class="row"><span>Valor aproximado por parcela</span><strong>${brl(d.parcela)}</strong></div>`;
+ }
+
+ comparativo.innerHTML="";
+ for(let r=1;r<=20;r++){
+   const x=calcData(r);
+   comparativo.innerHTML += parceiro
+    ? `<tr><td>R${r}</td><td>${pct(x.taxa)}</td><td>${brl(x.total)}</td><td>${brl(x.liquido)}</td><td style="color:#70d66b">${brl(x.parceiro)}</td></tr>`
+    : `<tr><td>R${r}</td><td>${pct(x.taxa)}</td><td>${brl(x.total)}</td><td>${brl(x.liquido)}</td><td>${brl(x.parceiro)}</td><td>-</td></tr>`;
+ }
+ return d;
+}
+function renderSugestoes(){
+ const valor=Number(sugValor.value||0);
+ const bandeira=sugBandeira.value;
+ const planos=["3X","6X","10X","12X","18X"];
+ const r=5;
+ sugestoesBody.innerHTML=planos.map((f,index)=>{
+   const taxa=taxaFor(bandeira,f,r);
+   const total=valor*(1+taxa);
+   const parcelas=Number(f.replace("X",""));
+   const parcela=total/parcelas;
+   const comissao=valor*(r/100);
+   const selo=index===0?"MAIS RÁPIDO":index===4?"MENOR PARCELA":"DESTAQUE";
+   return `<article class="promo-card">
+     <div class="promo-ribbon">${selo}</div>
+     <div class="promo-plan">${f}</div>
+     <div class="promo-sub">Plano promocional R5</div>
+     <div class="promo-installment">${brl(parcela)}</div>
+     <div class="promo-label">por parcela</div>
+     <div class="promo-commission">
+       <span class="promo-label">Você ganha nesta venda</span>
+       <strong>${brl(comissao)}</strong>
+     </div>
+     <div class="promo-total">Valor total da operação: <strong>${brl(total)}</strong></div>
+     <div class="promo-rate">Taxa aplicada: ${pct(taxa)}</div>
+     <div class="actions"><button class="btn gold" onclick="usarSugestao('${f}')">Simular esta oferta</button></div>
+   </article>`;
+ }).join("");
+}
+function usarSugestao(forma){
+ calcForma.value=forma;
+ calcR.value="R5";
+ calcValor.value=sugValor.value;
+ calcBandeira.value=sugBandeira.value;
+ mode="desejado";
+ tabDesejado.classList.add("active");
+ tabLimite.classList.remove("active");
+ valorLabel.textContent="Valor desejado pelo cliente";
+ modoAjuda.textContent="Informe quanto o cliente deseja receber; o sistema calculará o limite necessário.";
+ calcular();
+ go("calculadora");
+}
+function aplicarPermissoes(){
+ const parceiro=perfil==="Parceiro Comercial";
+ document.querySelectorAll(".interno").forEach(el=>el.style.display=parceiro?"none":"");
+ comparativoAjuda.textContent=parceiro
+  ?"Esta tela mostra somente as taxas e as comissões do próprio parceiro."
+  :"Comparação automática das taxas, comissões e resultado interno.";
+ // No perfil parceiro, hide management modules entirely
+ const restricted=["filiais","usuarios"];
+ restricted.forEach(id=>{
+   const btn=document.querySelector(`[data-page="${id}"]`);
+   if(btn)btn.style.display=parceiro?"none":"";
+ });
+ if(parceiro && (document.getElementById("filiais").classList.contains("active")||document.getElementById("usuarios").classList.contains("active")))go("dashboard");
+}
+function registrarOperacao(){
+ if(!db.clientes.length){alert("Cadastre ao menos um cliente antes de registrar a venda.");go("clientes");return}
+ const d=calcular();
+ modalContent.innerHTML=`<h2>Registrar venda</h2><div class="formgrid">
+ <div><label>Cliente</label><select id="opCliente">${db.clientes.map(c=>`<option>${c.nome}</option>`).join("")}</select></div>
+ <div><label>Parceiro responsável</label><input id="opParceiro" value="Parceiro Comercial"></div>
+ <div><label>Forma de recebimento</label><select id="opReceb"><option>PIX</option><option>TRANSFERÊNCIA/TED</option></select></div>
+ <div><label>Banco</label><input id="opBanco"></div>
+ <div><label>Nome do titular</label><input id="opTitular"></div>
+ <div><label>CPF/CNPJ do titular</label><input id="opCpf"></div>
+ <div><label>Chave PIX</label><input id="opPix"></div>
+ <div><label>Agência</label><input id="opAg"></div>
+ <div><label>Conta</label><input id="opConta"></div>
+ <div><label>Dígito</label><input id="opDig"></div>
+ </div><div class="actions"><button class="btn gold" onclick='saveOp(${JSON.stringify(d)})'>Salvar e gerar solicitação</button></div>`;modal.classList.add("open")
+}
+function saveOp(d){
+ const op={...d,id:"AGI-"+String(Date.now()).slice(-8),cliente:opCliente.value,parceiro:opParceiro.value,recebimento:opReceb.value,banco:opBanco.value,titular:opTitular.value,cpf:opCpf.value,pix:opPix.value,agencia:opAg.value,conta:opConta.value,digito:opDig.value,status:"Aguardando pagamento",data:new Date().toLocaleString("pt-BR")};
+ db.operacoes.unshift(op);save();closeModal();go("operacoes");showPayment(op.id)
+}
+function paymentText(op){
+ if(op.recebimento==="PIX")return `SOLICITAÇÃO DE PAGAMENTO — AGI+\n\nOperação: ${op.id}\nParceiro: ${op.parceiro}\nFilial: ${op.filial}\nCliente: ${op.cliente}\n\nFORMA DE PAGAMENTO: PIX\n\nChave: ${op.pix||"-"}\nValor: ${brl(op.liquido)}\nNome: ${op.titular||"-"}\nCPF/CNPJ: ${op.cpf||"-"}\nBanco: ${op.banco||"-"}\n\nLink interno: https://agimais.site/financeiro/operacoes/${op.id}`;
+ return `SOLICITAÇÃO DE PAGAMENTO — AGI+\n\nOperação: ${op.id}\nParceiro: ${op.parceiro}\nFilial: ${op.filial}\nCliente: ${op.cliente}\n\nPIX TRANSFERÊNCIA OU TED\n\nCPF: ${op.cpf||"-"}\nNome completo: ${op.titular||"-"}\nBanco: ${op.banco||"-"}\nAgência: ${op.agencia||"-"}\nNúmero da conta: ${op.conta||"-"}\nDígito: ${op.digito||"-"}\nTipo da conta: Corrente/Poupança\nValor: ${brl(op.liquido)}\n\nLink interno: https://agimais.site/financeiro/operacoes/${op.id}`;
+}
+function showPayment(id){const op=db.operacoes.find(x=>x.id===id);modalContent.innerHTML=`<h2>Solicitação interna ao financeiro</h2><div class="mono" id="payText">${paymentText(op)}</div><div class="actions"><button class="btn gold" onclick="copyPay()">Copiar mensagem</button><button class="btn dark" onclick="openWhats('${id}')">Abrir WhatsApp</button><button class="btn dark" onclick="markPaid('${id}')">Marcar como pago</button></div>`;modal.classList.add("open")}
+function copyPay(){navigator.clipboard.writeText(payText.textContent);alert("Mensagem copiada.")}
+function openWhats(id){const op=db.operacoes.find(x=>x.id===id);window.open("https://wa.me/?text="+encodeURIComponent(paymentText(op)),"_blank")}
+function markPaid(id){const o=db.operacoes.find(x=>x.id===id);o.status="Pago";save();closeModal()}
+function openClient(){
+ modalContent.innerHTML=`<h2>Novo cliente</h2>
+ <div class="formgrid">
+   <div><label>Nome completo</label><input id="cNome"></div>
+   <div><label>CPF/CNPJ</label><input id="cCpf"></div>
+   <div><label>Telefone / WhatsApp</label><input id="cTel"></div>
+   <div><label>E-mail</label><input id="cEmail"></div>
+   <div><label>Parceiro responsável</label><input id="cParceiro" value="Parceiro Comercial"></div>
+   <div><label>Forma de pagamento</label><select id="cForma"><option>PIX</option><option>TRANSFERÊNCIA/TED</option></select></div>
+   <div><label>Banco</label><input id="cBanco"></div>
+   <div><label>Nome do titular</label><input id="cTitular"></div>
+   <div><label>CPF/CNPJ do titular</label><input id="cCpfTitular"></div>
+   <div><label>Tipo de chave PIX</label><select id="cTipoPix"><option>CPF</option><option>CNPJ</option><option>Telefone</option><option>E-mail</option><option>Chave aleatória</option></select></div>
+   <div><label>Chave PIX</label><input id="cPix"></div>
+   <div><label>Agência</label><input id="cAgencia"></div>
+   <div><label>Número da conta</label><input id="cConta"></div>
+   <div><label>Dígito</label><input id="cDigito"></div>
+   <div><label>Tipo da conta</label><select id="cTipoConta"><option>Conta corrente</option><option>Conta poupança</option></select></div>
+ </div>
+ <div class="actions"><button class="btn gold" onclick="saveClient()">Salvar cadastro</button></div>`;
+ modal.classList.add("open")
+}
+function saveClient(){
+ const cliente={
+   id:"CLI-"+String(Date.now()).slice(-8),
+   nome:cNome.value,
+   cpf:cCpf.value,
+   tel:cTel.value,
+   email:cEmail.value,
+   parceiro:cParceiro.value,
+   forma:cForma.value,
+   banco:cBanco.value,
+   titular:cTitular.value,
+   cpfTitular:cCpfTitular.value,
+   tipoPix:cTipoPix.value,
+   pix:cPix.value,
+   agencia:cAgencia.value,
+   conta:cConta.value,
+   digito:cDigito.value,
+   tipoConta:cTipoConta.value
+ };
+ db.clientes.push(cliente);
+ save();
+ closeModal();
+ showClientPayment(cliente.id);
+}
+function clientPaymentText(c){
+ if(c.forma==="PIX"){
+   return `SOLICITAÇÃO DE PAGAMENTO — AGI+
+
+Cliente: ${c.nome}
+CPF/CNPJ: ${c.cpf}
+Parceiro: ${c.parceiro}
+
+PIX
+
+Chave: ${c.pix||"-"}
+Tipo da chave: ${c.tipoPix||"-"}
+Nome: ${c.titular||c.nome}
+CPF/CNPJ do titular: ${c.cpfTitular||c.cpf}
+Banco: ${c.banco||"-"}`;
+ }
+ return `SOLICITAÇÃO DE PAGAMENTO — AGI+
+
+Cliente: ${c.nome}
+CPF/CNPJ: ${c.cpf}
+Parceiro: ${c.parceiro}
+
+PIX TRANSFERÊNCIA OU TED
+
+CPF: ${c.cpfTitular||c.cpf}
+Nome completo: ${c.titular||c.nome}
+Banco: ${c.banco||"-"}
+Agência: ${c.agencia||"-"}
+Número da conta: ${c.conta||"-"}
+Dígito: ${c.digito||"-"}
+Tipo da conta: ${c.tipoConta||"-"}`;
+}
+function showClientPayment(id){
+ const c=db.clientes.find(x=>x.id===id);
+ if(!c)return;
+ modalContent.innerHTML=`<h2>Dados para pagamento</h2>
+ <div class="mono" id="clientPayText">${clientPaymentText(c)}</div>
+ <div class="actions">
+   <button class="btn gold" onclick="copyClientPay()">Copiar dados</button>
+   <button class="btn dark" onclick="openClientWhats('${id}')">Enviar pelo WhatsApp</button>
+ </div>`;
+ modal.classList.add("open");
+}
+function copyClientPay(){
+ navigator.clipboard.writeText(clientPayText.textContent);
+ alert("Dados de pagamento copiados.");
+}
+function openClientWhats(id){
+ const c=db.clientes.find(x=>x.id===id);
+ window.open("https://wa.me/?text="+encodeURIComponent(clientPaymentText(c)),"_blank");
+}
+function openFilial(){modalContent.innerHTML=`<h2>Nova filial / tabela</h2><div class="formgrid"><div><label>Nome editável</label><input id="fNome"></div><div><label>Código</label><input id="fCod"></div></div><p class="small">Neste protótipo, as taxas-base seguem as tabelas Master/Visa e Hiper/Elo já configuradas.</p><button class="btn gold" onclick="saveFilial()">Salvar</button>`;modal.classList.add("open")}
+function saveFilial(){db.filiais.push({id:fCod.value||"FIL-"+Date.now(),nome:fNome.value,codigo:fCod.value});save();closeModal()}
+function openUser(){modalContent.innerHTML=`<h2>Novo usuário</h2><div class="formgrid"><div><label>Nome</label><input id="uNome"></div><div><label>E-mail</label><input id="uEmail"></div><div><label>Perfil</label><select id="uPerfil"><option>Parceiro Comercial</option><option>Comercial de Expansão</option><option>Financeiro</option><option>Administrador</option></select></div><div><label>Filial</label><select id="uFilial">${db.filiais.map(f=>`<option>${f.nome}</option>`).join("")}</select></div></div><button class="btn gold" onclick="saveUser()">Salvar</button>`;modal.classList.add("open")}
+function saveUser(){db.usuarios.push({nome:uNome.value,email:uEmail.value,perfil:uPerfil.value,filial:uFilial.value,status:"Ativo"});save();closeModal()}
+function gerarContrato(){const op=db.operacoes.find(x=>x.id===contratoOp.value);if(!op)return;contratoPreview.textContent=`INSTRUMENTO PARTICULAR DE OPERAÇÃO\n\nNúmero: ${op.id}\nData: ${op.data}\nCliente: ${op.cliente}\nParceiro responsável: ${op.parceiro}\nFilial: ${op.filial}\n\nValor líquido: ${brl(op.liquido)}\nValor total da operação: ${brl(op.total)}\nForma de pagamento: ${op.f}\nNível de repasse: R${op.r}\nTaxa aplicada: ${pct(op.taxa)}\n\nO contratante declara ciência dos valores e condições apresentados nesta operação.\n\n__________________________________\nAssinatura do cliente\n\n__________________________________\nAGI+ Meios de Pagamentos`;}
+function closeModal(){modal.classList.remove("open")}
+function renderAll(){
+ calcFilial.innerHTML=db.filiais.map(f=>`<option>${f.nome}</option>`).join("");
+ clientesBody.innerHTML=db.clientes.map(c=>`<tr>
+ <td>${c.nome}</td>
+ <td>${c.cpf}</td>
+ <td>${c.tel}</td>
+ <td>${c.forma||"-"}</td>
+ <td>${c.banco||"-"}</td>
+ <td>${c.parceiro}</td>
+ <td><button class="btn dark" onclick="showClientPayment('${c.id}')">Pagamento / WhatsApp</button></td>
+ </tr>`).join("");
+ filiaisBody.innerHTML=db.filiais.map(f=>`<tr><td>${f.nome}</td><td>${f.codigo}</td><td>${db.usuarios.filter(u=>u.filial===f.nome&&u.perfil==="Parceiro Comercial").length}</td><td><button class="btn dark">Editar</button></td></tr>`).join("");
+ usersBody.innerHTML=db.usuarios.map(u=>`<tr><td>${u.nome}</td><td>${u.email}</td><td>${u.perfil}</td><td>${u.filial}</td><td>${u.status}</td></tr>`).join("");
+ const operacoesTela=perfil==="Parceiro Comercial"?db.operacoes.filter(o=>o.parceiro==="Parceiro Comercial"):db.operacoes;
+ opsBody.innerHTML=operacoesTela.map(o=>`<tr><td>${o.id}</td><td>${o.cliente}</td><td>${o.filial}</td><td>${o.f}</td><td>R${o.r}</td><td>${brl(o.liquido)}</td><td><span class="status ${o.status==="Pago"?"pago":"aguardando"}">${o.status}</span></td><td><button class="btn dark" onclick="showPayment('${o.id}')">Pagamento</button></td></tr>`).join("");
+ dashOps.innerHTML=db.operacoes.slice(0,6).map(o=>`<tr><td>${o.id}</td><td>${o.cliente}</td><td>${o.parceiro}</td><td>${brl(o.liquido)}</td><td>${o.status}</td></tr>`).join("");
+ const opsVisiveis=perfil==="Parceiro Comercial"?db.operacoes.filter(o=>o.parceiro==="Parceiro Comercial"):db.operacoes;
+ mClientes.textContent=perfil==="Parceiro Comercial"?new Set(opsVisiveis.map(o=>o.cliente)).size:db.clientes.length;
+ mOperacoes.textContent=opsVisiveis.length;
+ mVolume.textContent=brl(opsVisiveis.reduce((a,o)=>a+o.liquido,0));
+ mPendentes.textContent=opsVisiveis.filter(o=>o.status!=="Pago").length;
+ dashOps.innerHTML=opsVisiveis.slice(0,6).map(o=>`<tr><td>${o.id}</td><td>${o.cliente}</td><td>${o.parceiro}</td><td>${brl(o.liquido)}</td><td>${o.status}</td></tr>`).join("");
+ contratoOp.innerHTML=opsVisiveis.map(o=>`<option value="${o.id}">${o.id} — ${o.cliente}</option>`).join("");
+ aplicarPermissoes();
+ calcular();
+ renderSugestoes();
+}
+renderAll();
+</script>
+</body></html>
